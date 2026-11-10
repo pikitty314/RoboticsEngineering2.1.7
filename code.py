@@ -136,6 +136,8 @@ greenDiskStackCount = 0
 # Begin project code
 Arm10.set_end_effector_type(Arm.MAGNET)
 Pneumatic3.pump_on()
+OpticalSensor7.set_light(LedStateType.ON)
+
 def eStop():
     Arm10.set_control_stop(True)
     EntryConveyor1.stop()
@@ -190,6 +192,8 @@ def moveInitialDisksCubesOffPallet():
 def pressButton():
     Arm10.move_to(50, 185, 100)
     Arm10.move_to(50, 185, 15)
+    wait(3, SECONDS)
+    Arm10.move_inc(0, 0, 85)
 
 
 def rearrangeCubes():
@@ -236,7 +240,7 @@ def transportObjectOutA():
     # Wait till it's definitely gone
     while DistanceSensor5.object_distance(MM) < 230:
         pass
-    wait(3, SECONDS)
+    wait(5, SECONDS)
     EntryConveyor1.stop()
     TransportConveyor2.stop()
 
@@ -253,9 +257,7 @@ def transportObjectOutB():
     ExitConveyor4.spin(FORWARD)
 
     # Wait till it's definitely gone
-    while not ObjectSensorA.is_object_detected():
-        pass
-    wait(2, SECONDS)
+    wait(5, SECONDS)
     EntryConveyor1.stop()
     TransportConveyor2.stop()
     ExitConveyor4.stop()
@@ -274,6 +276,7 @@ def stackRedDisk():
     while DistanceSensor5.object_distance(MM) < 95:
         pass
     TransportConveyor2.stop()
+    EntryConveyor1.stop()
     Arm10.move_to(95, 160, 100)
     Arm10.move_inc(0, 0, -65)
     Arm10.set_end_effector_magnet(True)
@@ -298,6 +301,7 @@ def stackGreenDisk():
     while DistanceSensor5.object_distance(MM) < 95:
         pass
     TransportConveyor2.stop()
+    EntryConveyor1.stop()
     Arm10.move_to(95, 160, 100)
     Arm10.move_inc(0, 0, -65)
     Arm10.set_end_effector_magnet(True)
@@ -314,29 +318,34 @@ def fulfillRemainingABDisks():
         Pneumatic3.extend(CYLINDER1)
         wait(1, SECONDS)
         Pneumatic3.retract(CYLINDER1)
-        wait(100, MSEC)
+        wait(1, SECONDS)
 
-        diskColor = OpticalSensor7.color()
-        if (diskColor == Color.RED):
+        diskColor = OpticalSensor7.hue()
+        brain.screen.clear_screen()
+        if (diskColor < 30):
+            brain.screen.print("Red")
             if aRemaining["Red Disks"] > 0:
                 transportObjectOutA()
                 aRemaining["Red Disks"] -= 1
             elif bRemaining["Red Disks"] > 0:
                 transportObjectOutB()
                 bRemaining["Red Disks"] -= 1
-        elif (diskColor == Color.GREEN):
+            else:
+                stackRedDisk()
+        elif (diskColor > 60):
+            brain.screen.print("Green")
             if aRemaining["Green Disks"] > 0:
                 transportObjectOutA()
                 aRemaining["Green Disks"] -= 1
             elif bRemaining["Green Disks"] > 0:
                 transportObjectOutB()
                 bRemaining["Green Disks"] -= 1
-
+            else:
+                stackGreenDisk()
 
 
 # Run the program!
-stackRedDisk()
-stackRedDisk()
-stackGreenDisk()
-stackGreenDisk()
-stackRedDisk()
+moveInitialDisksCubesOffPallet()
+rearrangeCubes()
+fulfillRemainingABDisks()
+pressButton()
