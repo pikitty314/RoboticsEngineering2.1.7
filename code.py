@@ -343,9 +343,35 @@ def fulfillRemainingABDisks():
             else:
                 stackGreenDisk()
 
+def moveTwoCubesOutC():
+    TransportConveyor2.set_velocity(100, PERCENT)
+    ExitConveyor4.set_velocity(100, PERCENT)
+    TransportConveyor2.spin(FORWARD)
+    ExitConveyor4.spin(FORWARD)
+    moveFromPalletToConveyor(-45,130,65)
+    moveFromPalletToConveyor(-45,190,65)
+
+def fulfillCDisks():
+    global cRemaining, redDiskStackCount, greenDiskStackCount
+    while cRemaining["Red Disks"] > 0 and redDiskStackCount > 0:
+        Arm10.move_to(0, 135, 50 + redDiskStackCount*9)
+        moveFromPalletToConveyor(0, 135, 25 + redDiskStackCount*9)
+        redDiskStackCount -= 1
+        cRemaining["Red Disks"] -= 1
+
+
+def moveTwoCubesOutD():
+    TransportConveyor2.set_velocity(100, PERCENT)
+    TransportConveyor2.spin(FORWARD)
+    ExitConveyor4.stop()
+    moveFromPalletToConveyor(-45,130,40)
+    moveFromPalletToConveyor(-45,190,40)
 
 # Run the program!
+hi = """
 moveInitialDisksCubesOffPallet()
 rearrangeCubes()
 fulfillRemainingABDisks()
 pressButton()
+"""
+stackGreenDisk()
