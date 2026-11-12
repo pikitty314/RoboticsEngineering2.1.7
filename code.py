@@ -193,7 +193,7 @@ def pressButton():
     Arm10.move_to(50, 185, 100)
     Arm10.move_to(50, 185, 15)
     wait(3, SECONDS)
-    Arm10.move_inc(0, 0, 85)
+    Arm10.move_inc(0, 0, 120)
 
 
 def rearrangeCubes():
@@ -321,7 +321,10 @@ def fulfillRemainingABDisks():
         wait(1, SECONDS)
 
         diskColor = OpticalSensor7.hue()
+
         brain.screen.clear_screen()
+        brain.screen.set_cursor(1, 1)
+
         if (diskColor < 30):
             brain.screen.print("Red")
             if aRemaining["Red Disks"] > 0:
@@ -375,6 +378,8 @@ def fulfillC():
 
         diskColor = OpticalSensor7.hue()
         brain.screen.clear_screen()
+        brain.screen.set_cursor(1, 1)
+
         if (diskColor < 30):
             brain.screen.print("Red")
             if cRemaining["Red Disks"] > 0:
@@ -423,6 +428,8 @@ def fulfillD():
 
         diskColor = OpticalSensor7.hue()
         brain.screen.clear_screen()
+        brain.screen.set_cursor(1, 1)
+
         if (diskColor < 30):
             brain.screen.print("Red")
             dRemaining["Red Disks"] -= 1
@@ -458,4 +465,5 @@ pressButton()
 fulfillC()
 pressButton()
 fulfillD()
+pressButton()
 end()
