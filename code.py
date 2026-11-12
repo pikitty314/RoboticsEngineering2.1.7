@@ -244,7 +244,7 @@ def transportObjectOutA():
     EntryConveyor1.stop()
     TransportConveyor2.stop()
 
-def transportObjectOutB():
+def transportObjectToOtherWorkcell():
     # Set up the pneumatics to let objects out b
     Pneumatic3.retract(CYLINDER4)
 
@@ -328,7 +328,7 @@ def fulfillRemainingABDisks():
                 transportObjectOutA()
                 aRemaining["Red Disks"] -= 1
             elif bRemaining["Red Disks"] > 0:
-                transportObjectOutB()
+                transportObjectToOtherWorkcell()
                 bRemaining["Red Disks"] -= 1
             else:
                 stackRedDisk()
@@ -338,7 +338,7 @@ def fulfillRemainingABDisks():
                 transportObjectOutA()
                 aRemaining["Green Disks"] -= 1
             elif bRemaining["Green Disks"] > 0:
-                transportObjectOutB()
+                transportObjectToOtherWorkcell()
                 bRemaining["Green Disks"] -= 1
             else:
                 stackGreenDisk()
@@ -351,27 +351,111 @@ def moveTwoCubesOutC():
     moveFromPalletToConveyor(-45,130,65)
     moveFromPalletToConveyor(-45,190,65)
 
-def fulfillCDisks():
+def fulfillC():
     global cRemaining, redDiskStackCount, greenDiskStackCount
+    moveTwoCubesOutC()
+    cRemaining["Cubes"] -= 2
     while cRemaining["Red Disks"] > 0 and redDiskStackCount > 0:
         Arm10.move_to(0, 135, 50 + redDiskStackCount*9)
         moveFromPalletToConveyor(0, 135, 25 + redDiskStackCount*9)
         redDiskStackCount -= 1
         cRemaining["Red Disks"] -= 1
+        transportObjectToOtherWorkcell()
+    while cRemaining["Green Disks"] > 0 and greenDiskStackCount > 0:
+        Arm10.move_to(0, 135, 50 + redDiskStackCount*9)
+        moveFromPalletToConveyor(0, 135, 25 + redDiskStackCount*9)
+        greenDiskStackCount -= 1
+        cRemaining["Green Disks"] -= 1
+        transportObjectToOtherWorkcell()
+    while cRemaining["Red Disks"] > 0 or cRemaining["Green Disks"] > 0:
+        Pneumatic3.extend(CYLINDER1)
+        wait(1, SECONDS)
+        Pneumatic3.retract(CYLINDER1)
+        wait(1, SECONDS)
+
+        diskColor = OpticalSensor7.hue()
+        brain.screen.clear_screen()
+        if (diskColor < 30):
+            brain.screen.print("Red")
+            if cRemaining["Red Disks"] > 0:
+                transportObjectToOtherWorkcell()
+                cRemaining["Red Disks"] -= 1
+            else:
+                stackRedDisk()
+        elif (diskColor > 60):
+            brain.screen.print("Green")
+            if cRemaining["Green Disks"] > 0:
+                transportObjectToOtherWorkcell()
+                cRemaining["Green Disks"] -= 1
+            else:
+                stackGreenDisk()
 
 
-def moveTwoCubesOutD():
-    TransportConveyor2.set_velocity(100, PERCENT)
-    TransportConveyor2.spin(FORWARD)
-    ExitConveyor4.stop()
+def moveTwoCubesToD():
     moveFromPalletToConveyor(-45,130,40)
     moveFromPalletToConveyor(-45,190,40)
+    wait(2, SECONDS)
+
+def fulfillD():
+    global dRemaining, redDiskStackCount, greenDiskStackCount
+
+    EntryConveyor1.set_velocity(100, PERCENT)
+    TransportConveyor2.set_velocity(30, PERCENT)
+    ExitConveyor4.set_velocity(100, PERCENT)
+    TransportConveyor2.spin(FORWARD)
+    ExitConveyor4.spin(REVERSE)
+
+    while dRemaining["Red Disks"] > 0 and redDiskStackCount > 0:
+        Arm10.move_to(0, 135, 50 + redDiskStackCount*9)
+        moveFromPalletToConveyor(0, 135, 25 + redDiskStackCount*9)
+        redDiskStackCount -= 1
+        dRemaining["Red Disks"] -= 1
+    while dRemaining["Green Disks"] > 0 and greenDiskStackCount > 0:
+        Arm10.move_to(0, 135, 50 + redDiskStackCount*9)
+        moveFromPalletToConveyor(0, 135, 25 + redDiskStackCount*9)
+        greenDiskStackCount -= 1
+        dRemaining["Green Disks"] -= 1
+    while dRemaining["Red Disks"] > 0 or dRemaining["Green Disks"] > 0:
+        Pneumatic3.extend(CYLINDER1)
+        wait(1, SECONDS)
+        Pneumatic3.retract(CYLINDER1)
+        wait(1, SECONDS)
+
+        diskColor = OpticalSensor7.hue()
+        brain.screen.clear_screen()
+        if (diskColor < 30):
+            brain.screen.print("Red")
+            dRemaining["Red Disks"] -= 1
+            EntryConveyor1.spin(FORWARD)
+            wait(3, SECONDS)
+            EntryConveyor1.stop()
+        elif (diskColor > 60):
+            brain.screen.print("Green")
+            dRemaining["Green Disks"] -= 1
+            EntryConveyor1.spin(FORWARD)
+            wait(3, SECONDS)
+            EntryConveyor1.stop()
+
+    moveTwoCubesToD()
+    dRemaining["Cubes"] -= 2
+    
+    TransportConveyor2.set_velocity(100, PERCENT)
+    ExitConveyor4.spin(FORWARD)
+    wait(5, SECONDS)
+
+def end():
+    Arm10.move_to(120, 0, 100)
+    EntryConveyor1.stop()
+    TransportConveyor2.stop()
+    ExitConveyor4.stop()
+
 
 # Run the program!
-hi = """
 moveInitialDisksCubesOffPallet()
 rearrangeCubes()
 fulfillRemainingABDisks()
 pressButton()
-"""
-stackGreenDisk()
+fulfillC()
+pressButton()
+fulfillD()
+end()
